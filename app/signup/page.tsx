@@ -6,10 +6,16 @@ import Link from "next/link";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
 
 import { AuthShell } from "@/components/auth/AuthShell";
+import { startRouteProgress } from "@/components/motion/RouteProgress";
+import { BrandLoader } from "@/components/ui/BrandLoader";
 import { Button } from "@/components/ui/Button";
 import { Callout } from "@/components/ui/Callout";
 import { Field } from "@/components/ui/Field";
-import { isValidEmail, MIN_PASSWORD_LENGTH, safeNextPath } from "@/lib/auth/validate";
+import {
+  isValidEmail,
+  MIN_PASSWORD_LENGTH,
+  safeNextPath,
+} from "@/lib/auth/validate";
 
 function SignupForm() {
   const router = useRouter();
@@ -19,14 +25,20 @@ function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /** See the note on the same state in the login page. */
+  const [handoff, setHandoff] = useState(false);
 
   function validate(): boolean {
     const errors: typeof fieldErrors = {};
     if (!email.trim()) errors.email = "Enter your email address.";
-    else if (!isValidEmail(email)) errors.email = "Enter a valid email address.";
+    else if (!isValidEmail(email))
+      errors.email = "Enter a valid email address.";
     if (password.length < MIN_PASSWORD_LENGTH) {
       errors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
     }
@@ -43,98 +55,125 @@ function SignupForm() {
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, full_name: fullName.trim() || null }),
+        body: JSON.stringify({
+          email,
+          password,
+          full_name: fullName.trim() || null,
+        }),
       });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error?.message ?? "Could not create your account. Please try again.");
+        throw new Error(
+          result.error?.message ??
+            "Could not create your account. Please try again.",
+        );
       }
+      setHandoff(true);
+      startRouteProgress();
       router.push(safeNextPath(params.get("next")));
       router.refresh();
     } catch (cause) {
-      setFormError(cause instanceof Error ? cause.message : "Could not create your account. Please try again.");
+      setFormError(
+        cause instanceof Error
+          ? cause.message
+          : "Could not create your account. Please try again.",
+      );
       setBusy(false);
     }
   }
 
   return (
-    <AuthShell
-      title="Create your account"
-      subtitle="Build an AI assistant from your own website."
-      footer={
-        <span>
-          Already have an account?{" "}
-          <Link
-            href="/login"
-            className="font-medium text-burgundy-700 underline-offset-4 transition-colors hover:text-burgundy-800 hover:underline"
-          >
-            Log in
-          </Link>
-        </span>
-      }
-    >
-      <form className="space-y-5" onSubmit={onSubmit} noValidate>
-        {formError && <Callout tone="error">{formError}</Callout>}
-        <Field
-          label="Your name"
-          type="text"
-          autoComplete="name"
-          placeholder="Jane Doe"
-          value={fullName}
-          onChange={(event) => setFullName(event.target.value)}
-          hint="Optional."
-          disabled={busy}
-        />
-        <Field
-          label="Email address"
-          type="email"
-          autoComplete="email"
-          placeholder="you@yourbusiness.com"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          error={fieldErrors.email}
-          disabled={busy}
-        />
-        <div className="relative">
-          <Field
-            label="Password"
-            type={showPassword ? "text" : "password"}
-            autoComplete="new-password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            error={fieldErrors.password}
-            hint={`At least ${MIN_PASSWORD_LENGTH} characters.`}
-            disabled={busy}
-            className="pr-10"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword((value) => !value)}
-            className="absolute top-[35px] right-3 rounded p-1 text-ink-300 transition-colors hover:text-ink-700"
-            aria-label={showPassword ? "Hide password" : "Show password"}
-            tabIndex={-1}
-          >
-            {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-          </button>
+    <>
+      {handoff ? (
+        <div className="auth-handoff">
+          <BrandLoader label="Setting up your workspace…" />
         </div>
-        <PasswordMeter value={password} />
+      ) : null}
 
-        <Button
-          type="submit"
-          className="w-full"
-          loading={busy}
-          icon={!busy ? <ArrowRight aria-hidden className="size-4" /> : undefined}
-        >
-          Create account
-        </Button>
+      <AuthShell
+        title="Create your account"
+        subtitle="Build an AI assistant from your own website."
+        footer={
+          <span>
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              className="font-medium text-burgundy-700 underline-offset-4 transition-colors hover:text-burgundy-800 hover:underline"
+            >
+              Log in
+            </Link>
+          </span>
+        }
+      >
+        <form className="space-y-5" onSubmit={onSubmit} noValidate>
+          {formError && <Callout tone="error">{formError}</Callout>}
+          <Field
+            label="Your name"
+            type="text"
+            autoComplete="name"
+            placeholder="Jane Doe"
+            value={fullName}
+            onChange={(event) => setFullName(event.target.value)}
+            hint="Optional."
+            disabled={busy}
+          />
+          <Field
+            label="Email address"
+            type="email"
+            autoComplete="email"
+            placeholder="you@yourbusiness.com"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            error={fieldErrors.email}
+            disabled={busy}
+          />
+          <div className="relative">
+            <Field
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              error={fieldErrors.password}
+              hint={`At least ${MIN_PASSWORD_LENGTH} characters.`}
+              disabled={busy}
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((value) => !value)}
+              className="absolute top-[35px] right-3 rounded p-1 text-ink-300 transition-colors hover:text-ink-700"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              tabIndex={-1}
+            >
+              {showPassword ? (
+                <EyeOff className="size-4" />
+              ) : (
+                <Eye className="size-4" />
+              )}
+            </button>
+          </div>
+          <PasswordMeter value={password} />
 
-        <p className="text-xs leading-relaxed text-ink-500">
-          This is a private account — only you can see and manage the
-          assistants you build.
-        </p>
-      </form>
-    </AuthShell>
+          <Button
+            type="submit"
+            className="w-full"
+            loading={busy}
+            icon={
+              !busy ? <ArrowRight aria-hidden className="size-4" /> : undefined
+            }
+          >
+            Create account
+          </Button>
+
+          <p className="text-xs leading-relaxed text-ink-500">
+            This is a private account — only you can see and manage the
+            assistants you build.
+          </p>
+        </form>
+      </AuthShell>
+    </>
   );
 }
 
@@ -186,7 +225,7 @@ function PasswordMeter({ value }: { value: string }) {
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-sm text-ink-500">Loading…</div>}>
+    <Suspense fallback={<BrandLoader fullscreen label="Loading sign up…" />}>
       <SignupForm />
     </Suspense>
   );

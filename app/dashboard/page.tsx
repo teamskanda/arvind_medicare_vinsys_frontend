@@ -63,26 +63,38 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <RevealGroup
+        className="flex flex-wrap items-end justify-between gap-4"
+        stagger={0.08}
+      >
         <div>
-          <p className="landing-kicker">
-            <Sparkles className="size-3.5" aria-hidden />
-            Your workspace
-          </p>
-          <h1 className="mt-3 text-[1.75rem] leading-none font-semibold tracking-[-0.04em] text-ink-900">
-            My <span className="font-display italic text-burgundy-700">assistants</span>
-          </h1>
-          <p className="mt-2.5 text-sm text-ink-500">
-            Each one is built from the pages of a single website.
-          </p>
+          <RevealItem>
+            <p className="landing-kicker">
+              <Sparkles className="size-3.5" aria-hidden />
+              Your workspace
+            </p>
+          </RevealItem>
+          <RevealItem className="mt-3">
+            <h1 className="text-[1.75rem] leading-none font-semibold tracking-[-0.04em] text-ink-900">
+              My{" "}
+              <span className="text-sheen font-display italic">assistants</span>
+            </h1>
+          </RevealItem>
+          <RevealItem className="mt-2.5">
+            <p className="text-sm text-ink-500">
+              Each one is built from the pages of a single website.
+            </p>
+          </RevealItem>
         </div>
 
-        <Link href="/dashboard/new">
-          <Button icon={<Plus aria-hidden className="size-4" />}>
-            Create assistant
-          </Button>
-        </Link>
-      </div>
+        <RevealItem>
+          <Link href="/dashboard/new">
+            <Button icon={<Plus aria-hidden className="size-4" />}>
+              Create assistant
+            </Button>
+          </Link>
+        </RevealItem>
+      </RevealGroup>
 
       {error ? (
         <Callout
@@ -103,7 +115,10 @@ export default function DashboardPage() {
           {[0, 1, 2].map((index) => (
             <div
               key={index}
-              className="h-[208px] animate-pulse rounded-2xl border border-ink-100 bg-surface"
+              className="app-skeleton h-[208px] rounded-2xl border border-ink-100 bg-surface"
+              /* Staggered, so the three read as a list arriving rather than
+                 one block flashing. */
+              style={{ "--skeleton-delay": `${index * 0.14}s` } as React.CSSProperties}
             />
           ))}
         </div>
@@ -137,9 +152,13 @@ function EmptyState() {
           aria-hidden
           className="pointer-events-none absolute inset-x-0 -top-24 h-56 bg-[radial-gradient(ellipse_50%_100%_at_50%_100%,#c0456b2e,transparent_70%)]"
         />
+        {/* A nod to the assistant on the landing page, held right down: it
+            breathes and waits rather than performing. This screen is where
+            someone lands before they have made anything, so it should feel
+            inviting, not busy. */}
         <span
           aria-hidden
-          className="relative mx-auto flex size-14 items-center justify-center rounded-2xl bg-burgundy-50 ring-1 ring-burgundy-200"
+          className="idle-float pulse-ring relative mx-auto flex size-14 items-center justify-center rounded-2xl bg-burgundy-50 ring-1 ring-burgundy-200"
         >
           <Bot className="size-6 text-burgundy-700" strokeWidth={1.5} />
         </span>

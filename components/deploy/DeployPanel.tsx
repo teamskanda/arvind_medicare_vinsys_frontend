@@ -48,6 +48,18 @@ export function DeployPanel({ chatbot }: { chatbot: Chatbot }) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   const [domains, setDomains] = useState("");
+  /**
+   * Set only on the false -> true transition, so the card celebrates the act
+   * of publishing rather than the state of being published. Opening this tab
+   * on an assistant that went live last week should be quiet.
+   */
+  const [justPublished, setJustPublished] = useState(false);
+
+  useEffect(() => {
+    if (!justPublished) return;
+    const timer = setTimeout(() => setJustPublished(false), 2400);
+    return () => clearTimeout(timer);
+  }, [justPublished]);
 
   const load = useCallback(async () => {
     try {
@@ -73,6 +85,7 @@ export function DeployPanel({ chatbot }: { chatbot: Chatbot }) {
     setActionError(null);
     try {
       const next = await api.publishChatbot(chatbotId, domains.split(/[\n,]+/).map((value) => value.trim()).filter(Boolean));
+      if (next.is_published && !info?.is_published) setJustPublished(true);
       setInfo(next);
       setDomains(next.allowed_domains.join("\n"));
     } catch (error) {
@@ -102,7 +115,7 @@ export function DeployPanel({ chatbot }: { chatbot: Chatbot }) {
 
   if (!info) {
     return (
-      <div className="h-96 animate-pulse rounded-card border border-ink-100 bg-surface" />
+      <div className="app-skeleton h-96 rounded-card border border-ink-100 bg-surface" />
     );
   }
 
@@ -111,6 +124,7 @@ export function DeployPanel({ chatbot }: { chatbot: Chatbot }) {
       <PublicationCard
         info={info}
         working={working}
+        justPublished={justPublished}
         onPublish={onPublish}
         onUnpublish={onUnpublish}
       />
@@ -149,16 +163,23 @@ export function DeployPanel({ chatbot }: { chatbot: Chatbot }) {
 function PublicationCard({
   info,
   working,
+  justPublished,
   onPublish,
   onUnpublish,
 }: {
   info: DeploymentInfo;
   working: boolean;
+  justPublished: boolean;
   onPublish: () => void;
   onUnpublish: () => void;
 }) {
   return (
-    <section className="rounded-card border border-ink-100 bg-surface p-4">
+    <section
+      className={cn(
+        "publish-card rounded-card border border-ink-100 bg-surface p-4",
+        justPublished && "is-going-live",
+      )}
+    >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -253,8 +274,19 @@ function StatusDot({ published }: { published: boolean }) {
       aria-hidden
       className={cn(
         "size-2 rounded-full",
-        published ? "bg-success-700" : "bg-ink-300",
+        // Rings in its own status colour while live. This is the dashboard's
+        // only indicator that something is serving real visitors right now,
+        // so it is worth it being visibly alive rather than a static dot.
+        published ? "pulse-ring bg-success-700" : "bg-ink-300",
       )}
+      style={
+        published
+          ? ({
+              "--pulse-color": "var(--color-success-700)",
+              "--pulse-scale": "2.8",
+            } as React.CSSProperties)
+          : undefined
+      }
     />
   );
 }

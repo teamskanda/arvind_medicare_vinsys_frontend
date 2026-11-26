@@ -1275,6 +1275,39 @@ a.landing-pill:hover {
   background: linear-gradient(90deg, transparent, #ffffff3d 50%, transparent);
 }
 
+/* A light running down the divider between the form and the product's case.
+   The aurora behind these pages drifts over twenty seconds, which is right
+   for a background but means the screen looks frozen in any given glance.
+   This repeats on a human timescale, so the page reads as live. */
+.auth-aside {
+  position: relative;
+}
+.auth-aside::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -1px;
+  width: 1px;
+  height: 26%;
+  background: linear-gradient(180deg, transparent, #e0709a, transparent);
+  animation: auth-divider 6s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes auth-divider {
+  0% {
+    transform: translateY(-60%);
+    opacity: 0;
+  }
+  12%,
+  72% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(420%);
+    opacity: 0;
+  }
+}
+
 .auth-aside-item {
   display: flex;
   gap: 15px;
@@ -1307,16 +1340,58 @@ a.landing-pill:hover {
    Product chrome
    ========================================================================== */
 
-/* Dashboard page background: the same ambient field, held much quieter so it
-   never competes with content. */
+/* Dashboard page background.
+
+   This used to be two static gradients, which is why the dashboard sat dead
+   behind its content while the marketing and auth pages breathed. It now
+   drifts like the rest of the product — slower and dimmer, because this is a
+   working surface someone stares at for an hour, not a page they pass
+   through. The third lobe is fixed low in the viewport so a sparse workspace
+   is not a rectangle of pure black under the cards. */
 .app-field {
   position: fixed;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
   pointer-events: none;
-  background:
-    radial-gradient(ellipse 60% 50% at 12% -8%, #a8325c2e, transparent 62%),
-    radial-gradient(ellipse 50% 44% at 92% 4%, #5b2a7a26, transparent 64%);
+  background: radial-gradient(
+    ellipse 70% 50% at 50% 118%,
+    #5b2a7a24,
+    transparent 68%
+  );
+}
+.app-field::before,
+.app-field::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+}
+.app-field::before {
+  width: 62vw;
+  height: 62vw;
+  top: -28vw;
+  left: -14vw;
+  background: radial-gradient(circle, #a8325c7a, transparent 66%);
+  animation: app-field-a 24s ease-in-out infinite alternate;
+}
+.app-field::after {
+  width: 54vw;
+  height: 54vw;
+  top: -18vw;
+  right: -16vw;
+  background: radial-gradient(circle, #5b2a7a66, transparent 66%);
+  animation: app-field-b 31s ease-in-out infinite alternate;
+}
+@keyframes app-field-a {
+  to {
+    transform: translate3d(12vw, 20vw, 0) scale(1.2);
+  }
+}
+@keyframes app-field-b {
+  to {
+    transform: translate3d(-10vw, 26vw, 0) scale(1.24);
+  }
 }
 
 .creation-card {
@@ -1380,6 +1455,11 @@ a.landing-pill:hover {
   gap: 12px;
 }
 .crawl-stages li {
+  position: relative;
+  /* A stacking context, so the sweep below can sit at z-index -1: above the
+     row's own background but under its label, which keeps the text clean. */
+  z-index: 0;
+  overflow: hidden;
   align-items: flex-start;
   padding: 16px 12px;
   border-radius: 12px;
@@ -1391,10 +1471,479 @@ a.landing-pill:hover {
   background: var(--color-burgundy-50);
   box-shadow: inset 0 0 0 1px var(--color-burgundy-200);
 }
+/* A light that crosses the stage currently running. The spinner says the app
+   is alive; this says *this* row is the one doing the work, which is the part
+   someone scanning the five stages actually wants to know. */
+.crawl-stages .crawl-stage-active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 32%, #c0456b2b 50%, transparent 68%);
+  background-size: 220% 100%;
+  animation: crawl-sweep 2.4s ease-in-out infinite;
+}
+@keyframes crawl-sweep {
+  0% {
+    background-position: 170% 0;
+  }
+  100% {
+    background-position: -70% 0;
+  }
+}
 @keyframes crawl-breathe {
   50% {
     opacity: 0.25;
     transform: scale(1.08);
+  }
+}
+
+/* --- crawl visualiser ----------------------------------------------------- */
+
+/* Deliberately a fixed dark stage rather than a themed surface, like the
+   banner above it: the burgundy light in the scene needs somewhere dark to
+   fall, and on a light theme it would have nowhere to go. */
+.crawl-canvas {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid #ffffff14;
+  background: linear-gradient(170deg, #150e1c, #1f1428 58%, #160f1d);
+}
+.crawl-canvas-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(#ffffff0a 1px, transparent 1px),
+    linear-gradient(90deg, #ffffff0a 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse 78% 72% at 50% 50%, #000 22%, transparent 82%);
+  -webkit-mask-image: radial-gradient(ellipse 78% 72% at 50% 50%, #000 22%, transparent 82%);
+}
+.crawl-canvas-svg {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* Failure drains the colour out of the scene instead of redrawing it. */
+.crawl-canvas.is-failed .crawl-canvas-svg {
+  filter: saturate(0.4) brightness(0.86);
+}
+
+.crawl-canvas-legend {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px 18px;
+  padding: 0 22px 16px;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffffff85;
+}
+.crawl-canvas-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.crawl-canvas-legend i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.crawl-canvas-legend em {
+  margin-left: 4px;
+  font-style: normal;
+  font-weight: 650;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.crawl-dot-site {
+  background: #f0c6d8;
+  box-shadow: 0 0 0 3px #f0c6d820;
+}
+.crawl-dot-core {
+  background: #d4578a;
+  box-shadow: 0 0 0 3px #d4578a30;
+}
+
+/* Packets along the conduits. A dashed stroke scrolling by its own dash
+   period loops seamlessly and costs one compositor property. */
+.crawl-lane-flow {
+  animation: crawl-lane 1.15s linear infinite;
+}
+@keyframes crawl-lane {
+  to {
+    stroke-dashoffset: -19;
+  }
+}
+
+/* Sonar off the website node: it is being listened to. */
+.crawl-sonar {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: crawl-sonar 2.7s ease-out infinite;
+}
+@keyframes crawl-sonar {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2.15);
+    opacity: 0;
+  }
+}
+
+/* The globe's meridian narrows and widens — a rotation read from one line,
+   which is cheaper and steadier than spinning the whole glyph. */
+.crawl-globe.is-spinning ellipse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: crawl-globe 5.5s ease-in-out infinite;
+}
+@keyframes crawl-globe {
+  0%,
+  100% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(0.1);
+  }
+}
+
+/* Surface movement on the fill. The wave repeats every 40px and travels
+   exactly 40px, so the loop has no seam. */
+.crawl-wave {
+  animation: crawl-wave 2.8s linear infinite;
+}
+@keyframes crawl-wave {
+  to {
+    transform: translateX(40px);
+  }
+}
+
+/* --- route progress ------------------------------------------------------- */
+
+/* Sits above everything, including the sticky top bar, because it reports on
+   the whole window rather than on anything inside it. 2px, so it is
+   unmistakably chrome and never competes with content. */
+.route-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 2px;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.route-progress[data-active="true"] {
+  opacity: 1;
+}
+.route-progress span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  /* Eased, so each step of the creep glides instead of ticking. */
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  background: linear-gradient(90deg, #8e2548, #c0456b 55%, #f6b9d0);
+  /* The glow is what makes a 2px line read as lit rather than as a border. */
+  box-shadow:
+    0 0 12px #c0456bd9,
+    0 0 4px #e884ab;
+}
+
+/* The sign-in handoff. Credentials are accepted but the workspace is still
+   being rendered on the server, so the auth page dissolves into the loading
+   state rather than sitting there as though the click missed. */
+.auth-handoff {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: color-mix(in oklab, var(--color-canvas) 88%, transparent);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  animation: auth-handoff-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes auth-handoff-in {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+}
+
+/* --- brand loader --------------------------------------------------------- */
+
+/* A ring orbiting the product mark, for the few places that genuinely have
+   nothing to show yet. Built from a conic gradient rather than a spinning
+   icon so the trail fades behind the head, which is what stops it looking
+   like a generic throbber. */
+.brand-loader {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+}
+.brand-loader::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    #c0456b2e 180deg,
+    #e884ab 330deg,
+    #ffd7e6 360deg
+  );
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 0);
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2.5px),
+    #000 0
+  );
+  animation: brand-loader-spin 1.15s linear infinite;
+}
+.brand-loader::after {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #c0456b3d, transparent 70%);
+  animation: brand-loader-core 2s ease-in-out infinite;
+}
+@keyframes brand-loader-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+@keyframes brand-loader-core {
+  50% {
+    opacity: 0.4;
+    transform: scale(0.88);
+  }
+}
+
+/* --- always-on brand motion ----------------------------------------------- */
+
+/* The logo mark, breathing. It is on every screen in the product, including
+   the dashboard top bar, so it is the cheapest possible way to keep a page
+   from looking like a screenshot of itself.
+
+   `drop-shadow`, not `box-shadow`: the mark is a transparent cut-out, and a
+   box shadow would halo its bounding rectangle rather than the swan. The
+   transform is left to the component, which scales it on hover. */
+.logo-mark {
+  animation: logo-breathe 4.5s ease-in-out infinite;
+}
+@keyframes logo-breathe {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 5px #c0456b5c);
+  }
+  50% {
+    filter: drop-shadow(0 0 13px #e884abc4);
+  }
+}
+
+/* A light crossing a display word. Used on the one italic word in a page
+   heading — never on body text, and never on more than one phrase per
+   screen, or it stops being an accent and becomes a disco. */
+.text-sheen {
+  background-image: linear-gradient(
+    100deg,
+    var(--color-burgundy-700) 32%,
+    #ffd7e6 48%,
+    var(--color-burgundy-700) 64%
+  );
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: text-sheen 6.5s ease-in-out infinite;
+}
+@keyframes text-sheen {
+  0% {
+    background-position: 155% 0;
+  }
+  55%,
+  100% {
+    background-position: -55% 0;
+  }
+}
+
+/* --- shared product motion ------------------------------------------------ */
+
+/* Loading placeholder with a sheen crossing it. A pulsing block says "busy";
+   a sheen travelling in the reading direction says "content is coming". */
+.app-skeleton {
+  position: relative;
+  overflow: hidden;
+}
+.app-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    100deg,
+    transparent 18%,
+    #ffffff0d 42%,
+    #ffffff17 50%,
+    #ffffff0d 58%,
+    transparent 82%
+  );
+  /* Delay comes through a custom property: animation shorthand does not
+     inherit to a pseudo-element, but custom properties do, so this is what
+     lets a call site stagger a row of placeholders. */
+  animation: app-skeleton 1.7s ease-in-out infinite var(--skeleton-delay, 0s);
+}
+@keyframes app-skeleton {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Slow idle rise. For objects that should feel suspended rather than stacked
+   — used on the empty-state mark. */
+.idle-float {
+  animation: idle-float 5.5s ease-in-out infinite;
+}
+@keyframes idle-float {
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+/* --- chat turns ----------------------------------------------------------- */
+
+/* A message settling into the thread.
+
+   Done in CSS on purpose. `MessageBubble` is shared with the widget that runs
+   on the customer's own website, and that bundle carries no animation
+   library — adding one for a 0.4s entrance would put ~40kB on every page
+   view of their site to save a few lines here. A keyframe runs on mount for
+   free, and the reduced-motion clamp in the base layer already turns it into
+   an instant final state. */
+.chat-turn {
+  animation: chat-turn-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.chat-turn-user {
+  animation-name: chat-turn-in-user;
+}
+@keyframes chat-turn-in {
+  from {
+    opacity: 0;
+    transform: translate3d(-8px, 10px, 0) scale(0.985);
+  }
+}
+@keyframes chat-turn-in-user {
+  from {
+    opacity: 0;
+    transform: translate3d(8px, 10px, 0) scale(0.985);
+  }
+}
+
+/* Streaming caret. A hard blink is what a cursor does; a smooth pulse reads
+   as a loading state, which is the wrong signal while text is arriving. */
+.chat-caret {
+  animation: chat-caret 1s steps(1, end) infinite;
+}
+@keyframes chat-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Expanding ring, for "this is happening right now" markers. */
+.pulse-ring {
+  position: relative;
+}
+.pulse-ring::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  /* Overridable, so a "live" marker can ring in its own status colour
+     instead of the brand one. */
+  border: 1px solid var(--pulse-color, var(--color-burgundy-600));
+  animation: pulse-ring 2s ease-out infinite;
+  pointer-events: none;
+}
+/* Scale is settable because the same ring is used on a 6px status dot and on
+   a 56px mark, and one multiplier cannot read well at both: on the dot it
+   would be almost invisible, on the mark it would be a halo. */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(var(--pulse-scale, 1.9));
+    opacity: 0;
+  }
+}
+
+/* --- going live ----------------------------------------------------------- */
+
+/* The one moment in the product worth marking: an assistant becoming
+   reachable from the outside world. It fires once, on the transition, and
+   never on a page that merely loads already-published — a celebration you
+   get every time you visit stops being one. */
+.publish-card {
+  position: relative;
+  /* Stacking context, so the sweep can sit under the card's own text. */
+  z-index: 0;
+  overflow: hidden;
+}
+.publish-card.is-going-live {
+  animation: publish-glow 2.2s ease-out;
+}
+.publish-card.is-going-live::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 22%,
+    #c0456b2b 46%,
+    #e884ab3d 52%,
+    transparent 78%
+  );
+  background-size: 240% 100%;
+  animation: publish-sweep 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes publish-sweep {
+  from {
+    background-position: 185% 0;
+  }
+  to {
+    background-position: -85% 0;
+  }
+}
+@keyframes publish-glow {
+  0% {
+    box-shadow: 0 0 0 0 #c0456b00;
+    border-color: var(--color-ink-100);
+  }
+  20% {
+    box-shadow: 0 0 46px -8px #c0456b7a;
+    border-color: var(--color-burgundy-500);
+  }
+  100% {
+    box-shadow: 0 0 0 0 #c0456b00;
+    border-color: var(--color-ink-100);
   }
 }
 
@@ -1424,6 +1973,13 @@ a.landing-pill:hover {
   }
   .crawl-eyebrow {
     font-size: 10px;
+  }
+  /* The scene scales with its viewBox, but the labels under it would wrap
+     awkwardly against the edge, so they stack instead. */
+  .crawl-canvas-legend {
+    padding: 0 16px 14px;
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
   }
 }
 

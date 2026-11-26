@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Spotlight } from "@/components/motion/Spotlight";
 import { Button } from "@/components/ui/Button";
 import { CrawlStatusBadge } from "@/components/ui/Badge";
+import { LiveCount } from "@/components/ui/Counter";
 import { Modal } from "@/components/ui/Modal";
 import { formatDate, hostOf, prettyUrl } from "@/lib/utils";
 import type { Chatbot } from "@/types";
@@ -49,7 +50,19 @@ export function ChatbotCard({
                 <span className="truncate">{prettyUrl(chatbot.website_url, 34)}</span>
               </p>
             </div>
-            <CrawlStatusBadge status={chatbot.crawl_status} />
+            <div className="flex shrink-0 items-center gap-2">
+              {/* Only while the crawl is genuinely running. A dot that always
+                  pulsed would stop meaning anything, so it is absent on a
+                  settled assistant. */}
+              {isWorking ? (
+                <span
+                  aria-hidden
+                  className="pulse-ring size-1.5 rounded-full bg-burgundy-600"
+                  style={{ "--pulse-scale": "3" } as React.CSSProperties}
+                />
+              ) : null}
+              <CrawlStatusBadge status={chatbot.crawl_status} />
+            </div>
           </div>
 
           <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-ink-100 pt-4">
@@ -59,7 +72,16 @@ export function ChatbotCard({
               </dt>
               <dd className="mt-0.5 flex items-baseline gap-1 text-sm text-ink-900">
                 <FileText aria-hidden className="size-3.5 text-ink-300" />
-                <span className="font-semibold">{chatbot.stats.successful_pages}</span>
+                <span className="font-semibold">
+                  {/* No count-up on mount here: on a card in a list the
+                      figure is settled information, and rolling it every
+                      time the list renders would be theatre. It still rolls
+                      when the number actually changes mid-crawl. */}
+                  <LiveCount
+                    value={chatbot.stats.successful_pages}
+                    label="pages scraped"
+                  />
+                </span>
                 {chatbot.stats.failed_pages > 0 ? (
                   <span className="text-xs text-ink-500">
                     ({chatbot.stats.failed_pages} failed)

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Reveal } from "@/components/motion/Reveal";
+import { startRouteProgress } from "@/components/motion/RouteProgress";
 import { Button } from "@/components/ui/Button";
 import { Callout } from "@/components/ui/Callout";
 import { Field } from "@/components/ui/Field";
@@ -39,6 +40,7 @@ export default function NewChatbotPage() {
     try {
       const chatbot = await api.createChatbot(value);
       // Straight to the progress screen; the crawl has already started.
+      startRouteProgress();
       router.push(`/dashboard/${chatbot.id}`);
     } catch (err) {
       setFormError(
@@ -65,11 +67,18 @@ export default function NewChatbotPage() {
           aria-hidden
           className="pointer-events-none absolute inset-x-0 -top-32 h-64 bg-[radial-gradient(ellipse_55%_100%_at_30%_100%,#c0456b33,transparent_72%)]"
         />
-        <span className="relative mb-6 inline-flex size-13 items-center justify-center rounded-2xl bg-burgundy-50 text-burgundy-700 ring-1 ring-burgundy-200">
+        {/* Ringing outward, because this is the screen where you hand over a
+            website address — the mark should look like it is listening for
+            one rather than sitting there. */}
+        <span
+          className="pulse-ring relative mb-6 inline-flex size-13 items-center justify-center rounded-2xl bg-burgundy-50 text-burgundy-700 ring-1 ring-burgundy-200"
+          style={{ "--pulse-scale": "1.7" } as React.CSSProperties}
+        >
           <Globe2 className="size-6" strokeWidth={1.6} />
         </span>
         <h1 className="relative text-[1.65rem] font-semibold tracking-[-0.035em] text-ink-900">
-          Create an <span className="font-display italic text-burgundy-700">assistant</span>
+          Create an{" "}
+          <span className="text-sheen font-display italic">assistant</span>
         </h1>
         <p className="relative mt-2 text-sm leading-relaxed text-ink-500">
           Enter the website you want it to learn from. We read up to 20 pages

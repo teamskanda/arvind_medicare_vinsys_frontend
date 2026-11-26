@@ -1,5 +1,6 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
 import { Eye, FileWarning } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -7,6 +8,7 @@ import { PageContentModal } from "@/components/knowledge/PageContentModal";
 import { Button } from "@/components/ui/Button";
 import { Callout } from "@/components/ui/Callout";
 import { PageStatusBadge } from "@/components/ui/Badge";
+import { LiveCount } from "@/components/ui/Counter";
 import { ApiError, api } from "@/lib/api";
 import { cn, formatCharacters, formatDateTime, pathOf } from "@/lib/utils";
 import type { Chatbot, WebsitePageSummary } from "@/types";
@@ -23,6 +25,7 @@ export function KnowledgeBase({
   const [error, setError] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [viewing, setViewing] = useState<WebsitePageSummary | null>(null);
+  const reduced = useReducedMotion();
 
   const load = useCallback(async () => {
     try {
@@ -116,7 +119,11 @@ export function KnowledgeBase({
       {pages === null ? (
         <div className="space-y-2 p-5">
           {[0, 1, 2, 3].map((index) => (
-            <div key={index} className="h-11 animate-pulse rounded bg-ink-50" />
+            <div
+              key={index}
+              className="app-skeleton h-11 rounded bg-ink-50"
+              style={{ "--skeleton-delay": `${index * 0.1}s` } as React.CSSProperties}
+            />
           ))}
         </div>
       ) : pages.length === 0 ? (
@@ -150,10 +157,20 @@ export function KnowledgeBase({
                 </tr>
               </thead>
               <tbody>
-                {pages.map((page) => (
-                  <tr
+                {pages.map((page, index) => (
+                  <motion.tr
                     key={page.id}
                     className="border-b border-ink-50 last:border-0 hover:bg-canvas"
+                    initial={reduced ? false : { opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    /* Capped: a cascade is lovely over five rows and
+                       irritating over twenty, so the last rows arrive
+                       together rather than making anyone wait. */
+                    transition={{
+                      duration: 0.4,
+                      delay: Math.min(index * 0.035, 0.45),
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
                   >
                     <td className="px-5 py-3">
                       <p className="truncate font-medium text-ink-900">
@@ -191,7 +208,7 @@ export function KnowledgeBase({
                         View
                       </Button>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
               </tbody>
             </table>
@@ -199,8 +216,18 @@ export function KnowledgeBase({
 
           {/* Stacked cards on mobile */}
           <ul className="divide-y divide-ink-50 md:hidden">
-            {pages.map((page) => (
-              <li key={page.id} className="px-5 py-4">
+            {pages.map((page, index) => (
+              <motion.li
+                key={page.id}
+                className="px-5 py-4"
+                initial={reduced ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.4,
+                  delay: Math.min(index * 0.035, 0.45),
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-ink-900">
@@ -237,7 +264,7 @@ export function KnowledgeBase({
                     </Button>
                   </div>
                 </div>
-              </li>
+              </motion.li>
             ))}
           </ul>
         </>
@@ -339,7 +366,10 @@ function SummaryStat({
           tone === "warning" && "text-warning-700",
         )}
       >
-        {value}
+        {/* Counts up on arrival. These four land at the same moment the page
+            list does, so they are part of that arrival rather than a figure
+            that was already sitting there. */}
+        <LiveCount value={value} start={0} label={label} />
       </dd>
     </div>
   );

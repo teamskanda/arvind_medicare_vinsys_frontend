@@ -1,36 +1,52 @@
+import Image from "next/image";
+
 import { cn } from "@/lib/utils";
 
 /**
- * SKANDA AI wordmark. A typographic mark with a single geometric glyph —
- * no stock illustration, no gradient.
+ * SKANDA AI lockup: the swan-and-veena mark beside the wordmark.
+ *
+ * The mark is shown on its own rather than inside a brand-coloured tile. A
+ * tile is the right container for a simple geometric glyph, but this mark is
+ * fine-lined and ornate — boxing it in costs roughly a third of its height,
+ * and below about 32px its strokes stop resolving and it greys into a smudge.
+ * Standing free, it gets the full line height to work with.
+ *
+ * `height` is the control, not width: the mark is portrait, and every place
+ * it appears is a horizontal bar whose height is the real constraint.
  */
+
+/** Intrinsic pixels of the source asset — the aspect ratio comes from these. */
+const MARK = { src: "/brand/skanda-mark.png", width: 187, height: 314 };
+
 export function Logo({
   className,
   showWordmark = true,
+  height = 36,
+  priority = true,
 }: {
   className?: string;
   showWordmark?: boolean;
+  /** Rendered height in px. Below ~32 the mark's detail stops resolving. */
+  height?: number;
+  priority?: boolean;
 }) {
   return (
     <span className={cn("group inline-flex items-center gap-2.5", className)}>
-      <span
-        aria-hidden
+      <Image
+        src={MARK.src}
+        // The wordmark beside it already names the company, so repeating it
+        // here would have a screen reader say "SKANDA AI SKANDA AI".
+        alt={showWordmark ? "" : "SKANDA AI"}
+        width={Math.round((height * MARK.width) / MARK.height)}
+        height={height}
+        priority={priority}
         className={cn(
-          "gradient-brand flex size-7 shrink-0 items-center justify-center rounded-[8px]",
-          "shadow-[0_4px_14px_-4px_#b23763cc,inset_0_1px_0_0_#ffffff33]",
-          "transition-transform duration-500 ease-out group-hover:rotate-[8deg] group-hover:scale-105",
+          "logo-mark shrink-0 select-none",
+          // No rotation on hover: a tilt reads as playful on a geometric
+          // tile and as crooked on a drawn mark.
+          "transition-transform duration-500 ease-out group-hover:scale-[1.06]",
         )}
-      >
-        <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden>
-          <path
-            d="M12 3.5 20 8v8l-8 4.5L4 16V8l8-4.5Z"
-            stroke="white"
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-          />
-          <circle cx="12" cy="12" r="2.4" fill="white" />
-        </svg>
-      </span>
+      />
       {showWordmark ? (
         <span className="text-[15px] font-semibold tracking-[-0.025em] text-ink-900">
           SKANDA<span className="text-burgundy-700"> AI</span>

@@ -94,7 +94,18 @@ export function PageContentModal({
       {loading ? (
         <div className="space-y-2" aria-busy>
           {[0, 1, 2, 3, 4].map((index) => (
-            <div key={index} className="h-3.5 animate-pulse rounded bg-ink-50" />
+            <div
+              key={index}
+              className="app-skeleton h-3.5 rounded bg-ink-50"
+              style={
+                {
+                  // Narrowing lines, so the placeholder reads as a paragraph
+                  // rather than as a stack of identical bars.
+                  width: `${100 - index * 7}%`,
+                  "--skeleton-delay": `${index * 0.09}s`,
+                } as React.CSSProperties
+              }
+            />
           ))}
         </div>
       ) : error ? (

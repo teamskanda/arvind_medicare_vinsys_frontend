@@ -212,7 +212,7 @@ export function Playground({ chatbot }: { chatbot: Chatbot }) {
 
   if (!config) {
     return (
-      <div className="h-80 animate-pulse rounded-card border border-ink-100 bg-surface" />
+      <div className="app-skeleton h-80 rounded-card border border-ink-100 bg-surface" />
     );
   }
 

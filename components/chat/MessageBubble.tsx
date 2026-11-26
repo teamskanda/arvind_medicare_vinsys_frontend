@@ -85,8 +85,8 @@ export function MessageBubble({
   return (
     <div
       className={cn(
-        "flex w-full gap-2.5",
-        isUser ? "flex-row-reverse" : "flex-row",
+        "chat-turn flex w-full gap-2.5",
+        isUser ? "chat-turn-user flex-row-reverse" : "flex-row",
       )}
     >
       <div
@@ -128,7 +128,7 @@ export function MessageBubble({
             {streaming ? (
               <span
                 aria-hidden
-                className="ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 animate-pulse bg-burgundy-600"
+                className="chat-caret ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 bg-burgundy-600"
                 style={themed && palette ? { backgroundColor: palette.primary } : undefined}
               />
             ) : null}

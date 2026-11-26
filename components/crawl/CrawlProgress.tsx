@@ -1,9 +1,12 @@
 "use client";
 
-import { Check, Globe2, Loader2, RotateCcw, X } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import { Globe2, Loader2, RotateCcw, X } from "lucide-react";
 
+import { CrawlVisualizer } from "@/components/crawl/CrawlVisualizer";
 import { Button } from "@/components/ui/Button";
 import { Callout } from "@/components/ui/Callout";
+import { LiveCount } from "@/components/ui/Counter";
 import { cn, formatCharacters, prettyUrl } from "@/lib/utils";
 import type { CrawlStatus, CrawlStatusResponse } from "@/types";
 
@@ -70,13 +73,18 @@ export function CrawlProgress({
         </p></div>
       </div>
 
+      <CrawlVisualizer status={status} />
+
       <div className="px-5 py-5">
         <ol className="crawl-stages">
           {STAGES.map((stage, index) => {
             const state = states[index];
             return (
               <li key={stage.key} className={cn("flex items-center gap-3", state === "active" && "crawl-stage-active")}>
-                <StageIcon state={state} />
+                {/* Keyed on the state so each transition is a fresh mount —
+                    that is what lets the tick draw itself when a stage
+                    finishes instead of appearing fully formed. */}
+                <StageIcon key={state} state={state} />
                 <span
                   className={cn(
                     "text-sm",
@@ -172,21 +180,44 @@ export function CrawlProgress({
 }
 
 function StageIcon({ state }: { state: StageState }) {
+  const reduced = useReducedMotion();
+
   if (state === "done") {
     return (
-      <span
+      <motion.span
         aria-hidden
         className="flex size-5 shrink-0 items-center justify-center rounded-full bg-success-50"
+        initial={reduced ? false : { scale: 0.3 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
       >
-        <Check className="size-3 text-success-700" strokeWidth={3} />
-      </span>
+        {/* The tick draws itself along its own stroke. A stage completing is
+            a small event worth marking, and a line being written reads as
+            "this just finished" where a static tick reads as "this was
+            always done". */}
+        <svg viewBox="0 0 24 24" className="size-3 text-success-700" fill="none">
+          <motion.path
+            d="M4.5 12.5 L9.5 17.5 L19.5 6.5"
+            stroke="currentColor"
+            strokeWidth={3.4}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            initial={reduced ? false : { pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: 1 }}
+            transition={{
+              pathLength: { duration: 0.42, delay: 0.08, ease: "easeOut" },
+              opacity: { duration: 0.1, delay: 0.08 },
+            }}
+          />
+        </svg>
+      </motion.span>
     );
   }
   if (state === "active") {
     return (
       <span
         aria-hidden
-        className="flex size-5 shrink-0 items-center justify-center rounded-full bg-burgundy-50"
+        className="pulse-ring flex size-5 shrink-0 items-center justify-center rounded-full bg-burgundy-50"
       >
         <Loader2 className="size-3 animate-spin text-burgundy-600" strokeWidth={3} />
       </span>
@@ -235,7 +266,10 @@ function Stat({
           tone === "warning" && "text-warning-700",
         )}
       >
-        {value}
+        {/* Counts up from zero on arrival, then rolls to each new figure as
+            the poll comes back — the numbers are live, so they should look
+            it rather than blinking to a new value every few seconds. */}
+        <LiveCount value={value} start={0} label={label} />
       </dd>
     </div>
   );

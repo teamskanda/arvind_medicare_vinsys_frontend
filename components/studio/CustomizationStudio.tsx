@@ -379,8 +379,11 @@ export function CustomizationStudio({ chatbot }: { chatbot: Chatbot }) {
   if (!saved || !preview) {
     return (
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <div className="h-[520px] animate-pulse rounded-card border border-ink-100 bg-surface" />
-        <div className="h-[520px] animate-pulse rounded-card border border-ink-100 bg-surface" />
+        <div className="app-skeleton h-[520px] rounded-card border border-ink-100 bg-surface" />
+        <div
+          className="app-skeleton h-[520px] rounded-card border border-ink-100 bg-surface"
+          style={{ "--skeleton-delay": "0.16s" } as React.CSSProperties}
+        />
       </div>
     );
   }

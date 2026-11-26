@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Instrument_Serif } from "next/font/google";
 
+import { RouteProgress } from "@/components/motion/RouteProgress";
+
 import "./globals.css";
 
 const inter = Inter({
@@ -43,7 +45,12 @@ export default function RootLayout({
       // it the browser flashes the default white canvas on a hard reload.
       style={{ colorScheme: "dark", backgroundColor: "#07050a" }}
     >
-      <body className="theme-dark min-h-dvh antialiased">{children}</body>
+      <body className="theme-dark min-h-dvh antialiased">
+        {/* Above every page, so one navigation indicator serves the whole
+            product rather than each surface inventing its own. */}
+        <RouteProgress />
+        {children}
+      </body>
     </html>
   );
 }

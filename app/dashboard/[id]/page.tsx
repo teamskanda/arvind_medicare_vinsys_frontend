@@ -184,7 +184,7 @@ export default function ChatbotDetailPage() {
           </Callout>
         )
       ) : (
-        <div className="h-48 animate-pulse rounded-card border border-ink-100 bg-surface" />
+        <div className="app-skeleton h-48 rounded-card border border-ink-100 bg-surface" />
       )}
 
       {chatbot ? (
@@ -206,53 +206,33 @@ export default function ChatbotDetailPage() {
             ))}
           </div>
 
-          <div
-            role="tabpanel"
-            id="panel-knowledge"
-            aria-labelledby="tab-knowledge"
-            hidden={tab !== "knowledge"}
-          >
+          <TabPanel id="knowledge" active={tab === "knowledge"}>
             {tab === "knowledge" ? (
               <KnowledgeBase chatbot={chatbot} refreshToken={refreshToken} />
             ) : null}
-          </div>
+          </TabPanel>
 
-          <div
-            role="tabpanel"
-            id="panel-playground"
-            aria-labelledby="tab-playground"
-            hidden={tab !== "playground"}
-          >
+          <TabPanel id="playground" active={tab === "playground"}>
             {/* Mounted only when visible: switching tabs abandons an
                 in-flight stream rather than leaving it running unseen. */}
             {tab === "playground" ? <Playground chatbot={chatbot} /> : null}
-          </div>
+          </TabPanel>
 
-          <div
-            role="tabpanel"
-            id="panel-customize"
-            aria-labelledby="tab-customize"
-            hidden={tab !== "customize"}
-          >
+          <TabPanel id="customize" active={tab === "customize"}>
             {/* Mounted on demand: the studio loads the settings catalogue and
                 a live preview that talks to the AI, neither of which should
                 happen on a tab nobody opened. */}
             {studioVisited || tab === "customize" ? (
               <CustomizationStudio chatbot={chatbot} />
             ) : null}
-          </div>
+          </TabPanel>
 
-          <div
-            role="tabpanel"
-            id="panel-deploy"
-            aria-labelledby="tab-deploy"
-            hidden={tab !== "deploy"}
-          >
+          <TabPanel id="deploy" active={tab === "deploy"}>
             {/* Also mounted on demand: the preview iframe loads the real
                 public chatbot, which should not happen on a tab nobody
                 opened. */}
             {tab === "deploy" ? <DeployPanel chatbot={chatbot} /> : null}
-          </div>
+          </TabPanel>
         </>
       ) : null}
 
@@ -267,6 +247,56 @@ export default function ChatbotDetailPage() {
             : ". It goes live when you publish, and never changes after that."}
         </p>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * A tab's panel, which settles into place when its tab is chosen.
+ *
+ * Deliberately not an `AnimatePresence` swap. Only the panel's own contents
+ * decide whether they mount — the studio in particular stays mounted after a
+ * first visit so it does not refetch its catalogue and lose unsaved edits, and
+ * an exit animation would mean unmounting it. So the panel keeps the `hidden`
+ * attribute it always had, and animation is entrance-only: the content that
+ * arrives moves, the content you left simply stops being there.
+ *
+ * `initial={false}` matters — without it, the panel that is open on first
+ * paint would animate in as though the customer had just clicked it.
+ */
+function TabPanel({
+  id,
+  active,
+  children,
+}: {
+  id: Tab;
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  const reduced = useReducedMotion();
+
+  return (
+    <div
+      role="tabpanel"
+      id={`panel-${id}`}
+      aria-labelledby={`tab-${id}`}
+      hidden={!active}
+    >
+      {reduced ? (
+        children
+      ) : (
+        <motion.div
+          initial={false}
+          animate={
+            active
+              ? { opacity: 1, y: 0, filter: "blur(0px)" }
+              : { opacity: 0, y: 12, filter: "blur(5px)" }
+          }
+          transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {children}
+        </motion.div>
+      )}
     </div>
   );
 }

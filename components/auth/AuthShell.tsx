@@ -95,7 +95,7 @@ export function AuthShell({
         </div>
 
         {/* ------------------------------------------------ aside ----- */}
-        <aside className="relative hidden border-l border-ink-100 lg:flex lg:w-[44%] lg:flex-col lg:justify-center lg:px-16">
+        <aside className="auth-aside relative hidden border-l border-ink-100 lg:flex lg:w-[44%] lg:flex-col lg:justify-center lg:px-16">
           <motion.div
             {...(reduced
               ? {}
