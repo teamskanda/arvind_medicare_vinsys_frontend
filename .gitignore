@@ -1,0 +1,57 @@
+# Installed dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# Generated builds and caches
+.next/
+out/
+build/
+dist/
+.turbo/
+.cache/
+.swc/
+.eslintcache
+.stylelintcache
+next-env.d.ts
+*.tsbuildinfo
+
+# Local environment and credentials; keep safe setup templates
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+
+# Hosting and testing output
+.vercel/
+.netlify/
+.artifacts/
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
+# Logs and temporary files
+*.log
+*.pid
+*.pid.lock
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.zip
+*.tar
+*.tgz
+
+# Editor and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
