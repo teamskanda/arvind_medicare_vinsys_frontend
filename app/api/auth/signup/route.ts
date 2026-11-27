@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { backendUrl } from "@/lib/auth/server";
+import { backendUrl, clientIpHeaders } from "@/lib/auth/server";
 import { SESSION_COOKIE } from "@/lib/auth/constants";
 import { isSameOrigin } from "@/lib/auth/origin";
 
@@ -18,7 +18,8 @@ export async function POST(request: NextRequest) {
   try {
     const upstream = await fetch(backendUrl("/api/auth/signup"), {
       method: "POST", cache: "no-store", signal: AbortSignal.timeout(20000),
-      headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json", ...clientIpHeaders(request.headers) },
+      body: JSON.stringify(body),
     });
     const data = await upstream.json();
     if (!upstream.ok) return NextResponse.json(data, { status: upstream.status });
