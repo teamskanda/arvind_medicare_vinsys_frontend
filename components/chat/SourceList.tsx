@@ -40,7 +40,7 @@ export function SourceList({
           target="_blank"
           rel="noopener noreferrer nofollow"
           title={source.url}
-          className="inline-flex max-w-full items-center gap-1 rounded border border-ink-200 bg-surface px-1.5 py-0.5 text-[11px] text-ink-700 transition-colors hover:border-burgundy-600/30 hover:text-burgundy-700"
+          className="inline-flex max-w-full items-center gap-1 rounded border border-ink-200 bg-surface px-1.5 py-0.5 text-[11.5px] font-medium text-ink-700 transition-colors hover:border-burgundy-600/30 hover:text-burgundy-700"
           style={
             palette
               ? {

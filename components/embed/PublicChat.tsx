@@ -3,6 +3,7 @@
 import { Bot, MessageSquarePlus, Send, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { FollowUpQuestions } from "@/components/chat/FollowUpQuestions";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ApiError } from "@/lib/api";
 import { paletteVariables, useResolvedPalette, withAlpha } from "@/lib/appearance";
@@ -77,6 +78,8 @@ export function PublicChat({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hostIsMobile, setHostIsMobile] = useState(false);
+  // Suggested next questions for the latest answer only.
+  const [followUps, setFollowUps] = useState<string[]>([]);
 
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -130,6 +133,7 @@ export function PublicChat({
       setError(null);
       setSending(true);
       setQuestion("");
+      setFollowUps([]);
 
       const provisionalId = `pending-${Date.now()}`;
       setMessages((current) => [
@@ -186,6 +190,7 @@ export function PublicChat({
               case "done":
                 setPending(null);
                 setMessages((current) => [...current, event.message]);
+                setFollowUps(event.follow_up_questions ?? []);
                 if (event.partial) {
                   setError("The reply was cut off before it finished.");
                 }
@@ -255,6 +260,7 @@ export function PublicChat({
     setMessages([]);
     setPending(null);
     setError(null);
+    setFollowUps([]);
     await transport.startNewThread();
     inputRef.current?.focus();
   }
@@ -278,7 +284,7 @@ export function PublicChat({
         // unlike `h-screen` accounts for a mobile address bar); in the
         // customisation studio it is the preview surface. Same component,
         // sized by wherever it is.
-        "flex h-full min-h-0 w-full flex-col overflow-hidden",
+        "flex h-full min-h-0 w-full flex-col overflow-hidden antialiased",
         mode === "full" && "mx-auto max-w-2xl border-x",
       )}
       // The palette arrives as custom properties so a nested element can read
@@ -299,11 +305,11 @@ export function PublicChat({
         <Avatar config={config} palette={palette} />
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">{config.chatbot_name}</p>
+          <p className="truncate text-[15px] font-bold tracking-[-0.01em]">{config.chatbot_name}</p>
           {/* The business name when the customer set one, otherwise the
               hostname the visitor is already on. */}
           {(config.business_name ?? config.website_host) ? (
-            <p className="truncate text-[11px] opacity-80">
+            <p className="truncate text-xs font-medium opacity-85">
               {config.business_name ?? config.website_host}
             </p>
           ) : null}
@@ -378,6 +384,15 @@ export function PublicChat({
           ) : (
             <TypingIndicator palette={palette} />
           )
+        ) : null}
+
+        {/* Likely next questions for the latest answer; one click sends. */}
+        {!pending && !sending ? (
+          <FollowUpQuestions
+            questions={followUps}
+            onSelect={(next) => void send(next)}
+            palette={palette}
+          />
         ) : null}
 
         {/* Suggested questions, only when the customer configured them and

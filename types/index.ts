@@ -182,6 +182,7 @@ export interface ChatResponse {
   assistant_message: ChatMessage;
   retrieval: RetrievalDebug | null;
   used_fallback: boolean;
+  follow_up_questions?: string[];
 }
 
 export interface ChatConfig {
@@ -562,5 +563,7 @@ export type ChatStreamEvent =
       used_fallback: boolean;
       partial?: boolean;
       message: ChatMessage;
+      /** Likely next questions, shown as clickable chips. */
+      follow_up_questions?: string[];
     }
   | { type: "error"; code: string; message: string; retryable: boolean };

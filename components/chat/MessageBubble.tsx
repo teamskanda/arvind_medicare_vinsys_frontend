@@ -113,7 +113,7 @@ export function MessageBubble({
       <div className={cn("min-w-0 max-w-[85%]", isUser && "items-end")}>
         <div
           className={cn(
-            "rounded-card border px-3.5 py-2.5 text-sm leading-relaxed",
+            "rounded-card border px-3.5 py-2.5 text-[14.5px] font-medium leading-relaxed tracking-[-0.005em] antialiased",
             isUser
               ? "border-burgundy-600/15 bg-burgundy-50 text-ink-900"
               : isError

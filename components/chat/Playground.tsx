@@ -15,6 +15,7 @@ import type {
   SourceReference,
 } from "@/types";
 
+import { FollowUpQuestions } from "./FollowUpQuestions";
 import { MessageBubble } from "./MessageBubble";
 import { RetrievalPanel } from "./RetrievalPanel";
 
@@ -37,6 +38,7 @@ export function Playground({ chatbot }: { chatbot: Chatbot }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retrieval, setRetrieval] = useState<RetrievalDebug | null>(null);
+  const [followUps, setFollowUps] = useState<string[]>([]);
 
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -90,6 +92,7 @@ export function Playground({ chatbot }: { chatbot: Chatbot }) {
       setError(null);
       setSending(true);
       setQuestion("");
+      setFollowUps([]);
 
       // Show the question immediately. `id` is provisional until the backend
       // returns the persisted row in the `start` event.
@@ -153,6 +156,7 @@ export function Playground({ chatbot }: { chatbot: Chatbot }) {
               case "done":
                 setPending(null);
                 setMessages((current) => [...current, event.message]);
+                setFollowUps(event.follow_up_questions ?? []);
                 if (event.partial) {
                   setError(
                     "The reply was cut off before it finished. What arrived has been saved.",
@@ -191,6 +195,7 @@ export function Playground({ chatbot }: { chatbot: Chatbot }) {
     setPending(null);
     setRetrieval(null);
     setError(null);
+    setFollowUps([]);
     inputRef.current?.focus();
   }
 
@@ -298,6 +303,10 @@ export function Playground({ chatbot }: { chatbot: Chatbot }) {
           ) : (
             <ThinkingIndicator />
           )
+        ) : null}
+
+        {!pending && !sending ? (
+          <FollowUpQuestions questions={followUps} onSelect={(next) => void send(next)} />
         ) : null}
       </div>
 
